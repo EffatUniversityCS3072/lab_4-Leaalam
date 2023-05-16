@@ -1,7 +1,11 @@
 ---
 title: "CARET_Lab"
-output: html_document
+author: "Leena Alam"
 date: "`r Sys.Date()`"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -10,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Package loading
 ```{r}
+library(tidyverse)
 library(caret)
 ```
 
@@ -25,18 +30,34 @@ Task1: Create a Validation/Training Dataset
 You need to split the loaded dataset into two, 80% of which we will use to train our models and 20% that we will hold back as a validation dataset.
 Hint: use createDataPartition function
 ```{r}
+# Create the training and test datasets
+set.seed(100)
+
+# Step 1: Get row numbers for the training data
+trainRowNumbers <- createDataPartition(dataset$Species, p=0.8, list=FALSE)
+
+# Step 2: Create the training  dataset
+trainData <- dataset[trainRowNumbers,]
+
+# Step 3: Create the test dataset
+testData <- dataset[-trainRowNumbers,]
 
 ```
 
 Task2: Summarize Dataset
 Use skimr library to summarize the dataset
 ```{r}
-
+library(skimr)
+skimmed <- skim_to_wide(trainData)
+skimmed
 ```
 
 Task3: split input and output
  It is the time to seperate the input attributes and  the output attributes. call the inputs attributes x and the output attribute (or class) y.
 ```{r}
+# Store X (input attributes) and Y (output attributes) for later use.
+x = trainData[, 1:4]
+y = trainData[,5]
 
 ```
 
@@ -52,15 +73,56 @@ metric <- "Accuracy"
 Task5: Model Training
 Train 5 different algorithms using 'train' function:
 
-- Linear Discriminant Analysis (LDA)
+- Linear Discriminant Analysis (LDA).
+    (Name of the methd in R: LDA)
 - Classification and Regression Trees (CART).
+    (Name of the methd in R: rpart)
 - k-Nearest Neighbors (kNN).
+    (Name of the methd in R: knn)
 - Support Vector Machines (SVM) with a linear kernel.
-- Random Forest (RF)
+    (Name of the methd in R: svmRadial)
+- Random Forest (RF).
+    (Name of the methd in R: rf)1
 
 ```{r}
+# Set the seed for reproducibility
+set.seed(100)
+
+# Train the model using LDA.
+LDA_Model = train(Species ~ ., data=trainData, method='lda', 
+                  trControl = control, metric = metric)
 
 
+# Set the seed for reproducibility
+set.seed(100)
+
+# Train the model using CART.
+CART_Model = train(Species ~ ., data=trainData, method='rpart', 
+                  trControl = control, metric = metric)
+
+
+# Set the seed for reproducibility
+set.seed(100)
+
+# Train the model using KNN.
+KNN_Model = train(Species ~ ., data=trainData, method='knn', 
+                  trControl = control, metric = metric)
+
+
+# Set the seed for reproducibility
+set.seed(100)
+
+# Train the model using SVM.
+SVM_Model = train(Species ~ ., data=trainData, method='svmRadial', 
+                  trControl = control, metric = metric)
+
+
+# Set the seed for reproducibility
+set.seed(100)
+
+# Train the model using RF.
+RF_Model = train(Species ~ ., data=trainData, method='rf', 
+                  trControl = control, metric = metric)
 ```
 
 Task6: Select the Best Model
@@ -68,17 +130,44 @@ We now have 5 models and accuracy estimations for each. We need to compare the m
 Use resamples function to complete this task
 
 ```{r}
+# Compare model performances using resample()
+models_compare <- resamples(list(lda = LDA_Model, rpart = CART_Model, knn = KNN_Model, svmRadial = SVM_Model, rf = RF_Model))
 
+# Summary of the models performances
+summary(models_compare)
 
 ```
 What was the most accurate model?
+KNN or LDA
 
 
 Task7: Make Prediction (Confusion Matrix)
 Now we want to get an idea of the accuracy of the best model on our validation set. Use 'predict' and confusionMatrix functions to complete this task.
 
 ```{r}
+# Predict on testData (LDA_Model)
+predicted <- predict(LDA_Model, testData)
 
+confusionMatrix(reference = testData$Species, data = predicted)
 
+# Predict on testData (CART_Model)
+predicted <- predict(CART_Model, testData)
+
+confusionMatrix(reference = testData$Species, data = predicted)
+
+# Predict on testData (KNN_Model)
+predicted <- predict(KNN_Model, testData)
+
+confusionMatrix(reference = testData$Species, data = predicted)
+
+# Predict on testData (SVM_Model)
+predicted <- predict(SVM_Model, testData)
+
+confusionMatrix(reference = testData$Species, data = predicted)
+
+# Predict on testData (RF_Model)
+predicted <- predict(RF_Model, testData)
+
+confusionMatrix(reference = testData$Species, data = predicted)
 ```
 
